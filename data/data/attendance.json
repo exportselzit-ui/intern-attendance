@@ -1,0 +1,21 @@
+{
+  "records": [],
+  "interns": [
+    {
+      "id": 1,
+      "name": "Alex Johnson"
+    },
+    {
+      "id": 2,
+      "name": "Maria Garcia"
+    },
+    {
+      "id": 3,
+      "name": "David Smith"
+    },
+    {
+      "id": 4,
+      "name": "Sarah Williams"
+    }
+  ]
+}
