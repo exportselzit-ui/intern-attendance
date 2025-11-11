@@ -246,44 +246,6 @@
             font-size: 0.9rem;
         }
 
-        .notification {
-            padding: 12px;
-            border-radius: 8px;
-            margin: 10px 0;
-            display: none;
-        }
-
-        .notification.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .notification.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #555;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-
         @media (max-width: 768px) {
             .dashboard {
                 grid-template-columns: 1fr;
@@ -319,15 +281,15 @@
                 <p>Track and manage intern attendance efficiently</p>
                 <div class="attendance-stats">
                     <div class="stat">
-                        <div class="stat-value" id="presentCount">0</div>
+                        <div class="stat-value" id="presentCount">12</div>
                         <div class="stat-label">Present Today</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-value" id="absentCount">0</div>
+                        <div class="stat-value" id="absentCount">3</div>
                         <div class="stat-label">Absent Today</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-value" id="lateCount">0</div>
+                        <div class="stat-value" id="lateCount">2</div>
                         <div class="stat-label">Late Today</div>
                     </div>
                 </div>
@@ -336,12 +298,6 @@
             <div class="card">
                 <h2><i class="fas fa-user-check"></i> Mark Attendance</h2>
                 <p>Current time: <span class="time-display" id="currentTime">Loading...</span></p>
-                <div class="form-group">
-                    <label for="internSelect">Your Name:</label>
-                    <select id="internSelect" class="form-control">
-                        <option value="">-- Select Intern --</option>
-                    </select>
-                </div>
                 <div class="attendance-controls">
                     <button id="autoMarkBtn" class="btn btn-primary">
                         <i class="fas fa-robot"></i> Auto-mark at 9:00 AM
@@ -353,7 +309,6 @@
                         <i class="fas fa-sign-out-alt"></i> Mark Leave
                     </button>
                 </div>
-                <div class="notification" id="notification"></div>
             </div>
         </div>
 
@@ -369,7 +324,7 @@
                     </tr>
                 </thead>
                 <tbody id="attendanceTable">
-                    <tr><td colspan="4" style="text-align: center;">Loading attendance data...</td></tr>
+                    <!-- Table rows will be populated by JavaScript -->
                 </tbody>
             </table>
         </div>
@@ -387,7 +342,9 @@
             { id: 3, name: "David Smith", avatar: "DS", status: "absent", checkIn: "-", remarks: "On leave" },
             { id: 4, name: "Sarah Williams", avatar: "SW", status: "present", checkIn: "08:55 AM", remarks: "Early" },
             { id: 5, name: "James Brown", avatar: "JB", status: "late", checkIn: "09:15 AM", remarks: "Traffic delay" },
-            { id: 6, name: "Lisa Chen", avatar: "LC", status: "present", checkIn: "09:00 AM", remarks: "On time" }
+            { id: 6, name: "Lisa Chen", avatar: "LC", status: "present", checkIn: "09:00 AM", remarks: "On time" },
+            { id: 7, name: "Robert Taylor", avatar: "RT", status: "absent", checkIn: "-", remarks: "Sick leave" },
+            { id: 8, name: "Emily Wilson", avatar: "EW", status: "present", checkIn: "09:10 AM", remarks: "Slightly late" }
         ];
 
         // DOM elements
@@ -397,11 +354,9 @@
         const absentCountElement = document.getElementById('absentCount');
         const lateCountElement = document.getElementById('lateCount');
         const attendanceTableElement = document.getElementById('attendanceTable');
-        const internSelectElement = document.getElementById('internSelect');
         const autoMarkBtn = document.getElementById('autoMarkBtn');
         const manualMarkBtn = document.getElementById('manualMarkBtn');
         const leaveBtn = document.getElementById('leaveBtn');
-        const notificationElement = document.getElementById('notification');
 
         // Update date and time
         function updateDateTime() {
@@ -414,17 +369,6 @@
         // Initialize date and time
         updateDateTime();
         setInterval(updateDateTime, 1000);
-
-        // Load interns into dropdown
-        function loadInternsList() {
-            internSelectElement.innerHTML = '<option value="">-- Select Intern --</option>';
-            interns.forEach(intern => {
-                const option = document.createElement('option');
-                option.value = intern.id;
-                option.textContent = intern.name;
-                internSelectElement.appendChild(option);
-            });
-        }
 
         // Update attendance statistics
         function updateStats() {
@@ -465,80 +409,6 @@
             });
         }
 
-        // Show notification
-        function showNotification(message, type = 'info') {
-            notificationElement.textContent = message;
-            notificationElement.className = `notification ${type}`;
-            notificationElement.style.display = 'block';
-            
-            setTimeout(() => {
-                notificationElement.style.display = 'none';
-            }, 5000);
-        }
-
-        // Manual mark attendance
-        function manualMarkAttendance() {
-            const selectedInternId = parseInt(internSelectElement.value);
-            
-            if (!selectedInternId) {
-                showNotification('Please select your name', 'error');
-                return;
-            }
-
-            const intern = interns.find(i => i.id === selectedInternId);
-            if (!intern) {
-                showNotification('Intern not found', 'error');
-                return;
-            }
-
-            const now = new Date();
-            const currentTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            
-            // Determine if the user is late (after 9:05 AM)
-            const currentHour = now.getHours();
-            const currentMinute = now.getMinutes();
-            let status = 'present';
-            let remarks = 'On time';
-            
-            if (currentHour > 9 || (currentHour === 9 && currentMinute > 5)) {
-                status = 'late';
-                remarks = 'Arrived after 9:05 AM';
-            }
-            
-            // Update the intern's attendance
-            intern.status = status;
-            intern.checkIn = currentTime;
-            intern.remarks = remarks;
-            
-            renderAttendanceTable();
-            updateStats();
-            showNotification(`Attendance marked for ${intern.name} at ${currentTime}`, 'success');
-        }
-
-        // Mark leave
-        function markLeave() {
-            const selectedInternId = parseInt(internSelectElement.value);
-            
-            if (!selectedInternId) {
-                showNotification('Please select your name', 'error');
-                return;
-            }
-
-            const intern = interns.find(i => i.id === selectedInternId);
-            if (!intern) {
-                showNotification('Intern not found', 'error');
-                return;
-            }
-
-            intern.status = 'absent';
-            intern.checkIn = '-';
-            intern.remarks = 'On leave';
-            
-            renderAttendanceTable();
-            updateStats();
-            showNotification(`Leave marked for ${intern.name}`, 'success');
-        }
-
         // Auto-mark attendance at 9:00 AM
         function autoMarkAttendance() {
             const now = new Date();
@@ -556,13 +426,66 @@
                 
                 renderAttendanceTable();
                 updateStats();
-                showNotification('Attendance auto-marked for all present interns at 9:00 AM', 'success');
+                alert('Attendance auto-marked for all present interns at 9:00 AM');
             }
+        }
+
+        // Manual mark attendance
+        function manualMarkAttendance() {
+            const now = new Date();
+            const currentTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            
+            // Find the current user (in a real app, this would be the logged-in user)
+            const currentUser = interns[0]; // Using first intern as example
+            
+            if (currentUser.status === 'present') {
+                alert('Your attendance is already marked for today.');
+                return;
+            }
+            
+            // Determine if the user is late (after 9:05 AM)
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            let status = 'present';
+            let remarks = 'On time';
+            
+            if (currentHour > 9 || (currentHour === 9 && currentMinute > 5)) {
+                status = 'late';
+                remarks = 'Arrived after 9:05 AM';
+            }
+            
+            // Update the user's attendance
+            currentUser.status = status;
+            currentUser.checkIn = currentTime;
+            currentUser.remarks = remarks;
+            
+            renderAttendanceTable();
+            updateStats();
+            alert(`Attendance marked successfully at ${currentTime}`);
+        }
+
+        // Mark leave
+        function markLeave() {
+            // Find the current user (in a real app, this would be the logged-in user)
+            const currentUser = interns[0]; // Using first intern as example
+            
+            if (currentUser.status === 'absent') {
+                alert('You are already marked as absent for today.');
+                return;
+            }
+            
+            currentUser.status = 'absent';
+            currentUser.checkIn = '-';
+            currentUser.remarks = 'On leave';
+            
+            renderAttendanceTable();
+            updateStats();
+            alert('Leave marked successfully for today');
         }
 
         // Event listeners
         autoMarkBtn.addEventListener('click', () => {
-            showNotification('Auto-mark feature enabled. Attendance will be automatically marked at 9:00 AM for all present interns.', 'info');
+            alert('Auto-mark feature enabled. Attendance will be automatically marked at 9:00 AM for all present interns.');
         });
 
         manualMarkBtn.addEventListener('click', manualMarkAttendance);
@@ -572,14 +495,8 @@
         setInterval(autoMarkAttendance, 60000);
 
         // Initialize the page
-        loadInternsList();
         updateStats();
         renderAttendanceTable();
-
-        // Show welcome notification
-        setTimeout(() => {
-            showNotification('Welcome to Intern Attendance System! Select your name and mark attendance.', 'info');
-        }, 1000);
     </script>
 </body>
 </html>
